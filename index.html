@@ -1,0 +1,120 @@
+
+
+<html style="padding:0;margin:0; height: 100%; overflow: hidden">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
+    </head>
+<script>
+    let ws
+    window.onload = function (params) {
+        const origin = location.origin.replace('http', 'ws').replace('9615', '9616');
+        ws = new WebSocket(origin);
+        ws.onopen = function() {
+            // Web Socket is connected, send data using send()
+            console.log("Message is sent...");
+        };
+
+        ws.onmessage = function (evt) { 
+            var received_msg = evt.data;
+            console.log("Message is received...");
+        };
+
+        ws.onclose = function() { 
+            // websocket is closed.
+            console.log("Connection is closed..."); 
+        };
+
+    }
+
+    function left() {
+        ws.send('left');
+    }
+
+    function right() {
+        ws.send('right');
+    }
+
+    let drag;
+    function dragmove(e) {
+        if(drag){
+            let d = {
+                x: drag.x - e.touches[0].clientX,
+                y: drag.y - e.touches[0].clientY,
+                e: 'move'
+            }
+            ws.send(JSON.stringify(d));
+            drag = {
+                x: e.touches[0].clientX,
+                y: e.touches[0].clientY
+            }
+        }else{
+            drag = {
+                x: e.touches[0].clientX,
+                y: e.touches[0].clientY
+            }
+        }
+        // ws.send(JSON.stringify(e));
+    }
+    function dragstart(e) {
+        drag={
+            x:e.touches[0].clientX,
+            y:e.touches[0].clientY
+        }
+    }
+    function dragend(e) {
+        drag = undefined;
+    }
+
+
+    let tdrag;
+    function tdragmove(e) {
+        if (tdrag) {
+            let d = {
+                x: tdrag.x - e.touches[0].clientX,
+                y: tdrag.y - e.touches[0].clientY,
+                e: 'scroll'
+            }
+            ws.send(JSON.stringify(d));
+            tdrag = {
+                x: e.touches[0].clientX,
+                y: e.touches[0].clientY
+            }
+        } else {
+            tdrag = {
+                x: e.touches[0].clientX,
+                y: e.touches[0].clientY
+            }
+        }
+        ws.send(JSON.stringify(e));
+    }
+    function tdragstart(e) {
+        tdrag = {
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY
+        }
+    }
+    function tdragend(e) {
+        tdrag = undefined;
+    }
+</script>
+
+<body style="padding:0;margin:0; height: 100%; overflow: hidden">
+    <div style="padding:0;float:left;width:35%;height:20%;background:#777;margin:0" onclick="left()"></div>
+
+    <div style="padding:0;float:left;width:30%;height:20%;background:#444;margin:0"
+        ontouchmove="tdragmove(event)"
+        ontouchstart="tdragstart(event)"
+        ontouchend="tdragend(event)"
+    ></div>
+
+    <div style="padding:0;float:left;width:35%;height:20%;background:#777;margin:0" onclick="right()"></div>
+
+
+
+    <div style="padding:0;float:left;width:500%;height:80%;background:#aaa;margin:0"
+        ontouchmove="dragmove(event)"
+        ontouchstart="dragstart(event)"
+        ontouchend="dragend(event)"
+    ></div>
+</body>
+</html>
