@@ -31,7 +31,6 @@ console.log(addresses.toString() + ':' + 9615);
 
 
 
-
 const WebSocket = require('ws');
 
 const ws = new WebSocket.Server({ port: 9616 });
@@ -47,6 +46,9 @@ ws.on('connection', function connection(ws, req) {
         }else
         if(data==='right'){
             robot.mouseClick(data);
+        } else
+        if(data==='space'){
+            robot.keyTap('space');
         } else {
             const d = JSON.parse(data);
 

@@ -5,8 +5,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
     </head>
 <script>
-    let ws
-    window.onload = function (params) {
+    let ws;
+    const sensitivity = 2;
+
+    function connect() {
         const origin = location.origin.replace('http', 'ws').replace('9615', '9616');
         ws = new WebSocket(origin);
         ws.onopen = function() {
@@ -21,11 +23,16 @@
 
         ws.onclose = function() { 
             // websocket is closed.
+            document.getElementById('space').innerHTML = 'Connection Closed';
+            ws.closed = 1;            
+
             console.log("Connection is closed..."); 
         };
+        document.getElementById('space').innerHTML = '';
 
     }
-
+    window.onload = connect;
+    
     function left() {
         ws.send('left');
     }
@@ -34,12 +41,25 @@
         ws.send('right');
     }
 
+    function space() {
+        if(ws.closed){
+            connect();
+        }
+        ws.send('space');
+    }
+
     let drag;
     function dragmove(e) {
+        if(ws.closed){
+            connect();
+        }
+        
         if(drag){
+            const dx = drag.x - e.touches[0].clientX;
+            const dy = drag.y - e.touches[0].clientY;
             let d = {
-                x: drag.x - e.touches[0].clientX,
-                y: drag.y - e.touches[0].clientY,
+                x: Math.sign(dx) * Math.max(sensitivity, Math.pow(dx, 2)) / sensitivity,
+                y: Math.sign(dy) * Math.max(sensitivity, Math.pow(dy, 2)) / sensitivity,
                 e: 'move'
             }
             ws.send(JSON.stringify(d));
@@ -69,9 +89,11 @@
     let tdrag;
     function tdragmove(e) {
         if (tdrag) {
+            const dx = tdrag.x - e.touches[0].clientX;
+            const dy = tdrag.y - e.touches[0].clientY;
             let d = {
-                x: tdrag.x - e.touches[0].clientX,
-                y: tdrag.y - e.touches[0].clientY,
+                x: Math.sign(dx) * Math.max(1,Math.pow(dx, 2)) * 2,
+                y: Math.sign(dy) * Math.max(1,Math.pow(dy, 2)) * 2,
                 e: 'scroll'
             }
             ws.send(JSON.stringify(d));
@@ -96,6 +118,23 @@
     function tdragend(e) {
         tdrag = undefined;
     }
+
+    function scroll_toggle_minimize(){
+        const s = document.getElementById('scroll');
+
+        if(!s.max){
+
+            s.style.width = '100%';
+            s.style.height = '100%';
+            s.style.position = 'absolute';
+            s.max = 1;
+        }else{
+            s.style.width = '30%';
+            s.style.height = '20%';
+            s.style.position = 'initial';
+            s.max = 0;
+        }
+    }
 </script>
 
 <body style="padding:0;margin:0; height: 100%; overflow: hidden">
@@ -105,16 +144,23 @@
         ontouchmove="tdragmove(event)"
         ontouchstart="tdragstart(event)"
         ontouchend="tdragend(event)"
+        onclick="scroll_toggle_minimize()"
+        id="scroll"
     ></div>
 
     <div style="padding:0;float:left;width:35%;height:20%;background:#777;margin:0" onclick="right()"></div>
 
 
 
-    <div style="padding:0;float:left;width:500%;height:80%;background:#aaa;margin:0"
+    <div style="padding:0;float:left;width:500%;height:70%;background:#aaa;margin:0"
+        onclick="left()"
         ontouchmove="dragmove(event)"
         ontouchstart="dragstart(event)"
         ontouchend="dragend(event)"
     ></div>
+
+    <div onclick="space()" style="padding:0;float:left;width:500%;height:10%;background:#888;margin:0" id="space">
+    </div>
+
 </body>
 </html>
